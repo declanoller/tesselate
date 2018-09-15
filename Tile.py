@@ -14,7 +14,7 @@ class Tile:
         self.type = type
         self.rot = rot
 
-
+        self.N_indices = 12
 
 
 

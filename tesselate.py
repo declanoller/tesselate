@@ -2,9 +2,9 @@ from Board import Board
 
 
 
-b = Board()
+b = Board(board_size=20)
 
-b.hStripesPopulate()
+b.bothStripesPopulate(mod=2)
 
 b.displayBoard()
 
