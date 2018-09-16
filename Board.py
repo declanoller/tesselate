@@ -44,6 +44,8 @@ class Board:
 		self.tile_pos_set = set([])
 		self.disp_tile_list = []
 
+		self.N_closed_paths = 0
+
 
 
 	def insertTile(self,pos,type,rot):
@@ -51,6 +53,8 @@ class Board:
 		#The pos here will be the UPPER LEFT. So if it's a 2x2, you have to check
 		#(x,y),(x+1,y),(x,y+1),(x+1,y+1)
 		assert type in [1,2], 'type not 1 or 2'
+
+		#print('\n\nadding tile at {}'.format(pos))
 
 		if type==1:
 			assert pos not in self.tile_pos_set, 'tile already in {}!'.format(pos)
@@ -61,19 +65,12 @@ class Board:
 
 			tile = self.tile_list[-1]
 
-
-
-			#for each edge:
-			#-get its pair
-			#-get both of their neighbor pos
-			#-check if the neighbors exist
-			#-if neither do, new path.
-			#-if one does, add to current path.
-			#-if both do, combine both those paths.
+			#return(0)
 
 			for e1_i in range(12):
-
+				#print('doing it for edge index',e1_i)
 				e2_i = tile.pair_match[e1_i]
+
 
 				(e1_s,e1_t) = self.edgeIndexToSideAndTick(e1_i)
 				(e2_s,e2_t) = self.edgeIndexToSideAndTick(e2_i)
@@ -84,9 +81,9 @@ class Board:
 
 				if n1_pos in self.tile_pos_set:
 
+					#If they're both present:
 					if n2_pos in self.tile_pos_set:
-
-						#If they're both present:
+						#print('both neighbors there')
 						n1_e_i = self.edge_match[e1_i]
 						n2_e_i = self.edge_match[e2_i]
 
@@ -100,19 +97,31 @@ class Board:
 							if (n2_pos,n2_e_i) in p:
 								path2_ind = i
 
-						if path1_ind==path_ind:
-							
-
-
-
+						if path1_ind==path2_ind:
+							self.N_closed_paths += 1
+							#I think there's nothing to do here, besides remove
+							#from the frontier list.
 						else:
-							#If they're different
+							#This should remove the edge from the first path, remove
+							#the other edge from the second path, then get the other
+							#edge from the second path and add it to the first path,
+							#then delete the second path.
+							'''print('path1_ind:',path1_ind)
+							print('path2_ind:',path2_ind)
+							print('path1:',self.paths_list[path1_ind])
+							print('path2:',self.paths_list[path2_ind])
+							print('(n1_pos,n1_e_i):',(n1_pos,n1_e_i))
+							print('(n2_pos,n2_e_i):',(n2_pos,n2_e_i))'''
 
+							self.paths_list[path1_ind].remove((n1_pos,n1_e_i))
+							self.paths_list[path2_ind].remove((n2_pos,n2_e_i))
+							self.paths_list[path1_ind].append(self.paths_list[path2_ind][0])
+							#self.paths_list.pop(path2_ind)
+							del self.paths_list[path2_ind]
 
-
+					#If only n1.
 					else:
-
-						#If only n1.
+						#print('only neighbor n1 there:',n1_pos)
 						n1_e_i = self.edge_match[e1_i]
 
 						for p in self.paths_list:
@@ -126,10 +135,10 @@ class Board:
 
 				else:
 
+					#If only n2
 					if n2_pos in self.tile_pos_set:
-
-						#If only n2
-						n2_e_i = self.edge_match[e_i]
+						#print('only neighbor n2 there:',n2_pos)
+						n2_e_i = self.edge_match[e2_i]
 
 						for i,p in enumerate(self.paths_list):
 							#If that is in any of the path list "ends" (which it must),
@@ -139,47 +148,12 @@ class Board:
 								p.append((pos,e1_i))
 								break
 
+					#If neither are.
 					else:
-						#If neither are.
+						#print('neither neighbor there')
 						self.paths_list.append([(pos,e1_i),(pos,e2_i)])
 						self.frontier_set.add((pos,e1_i))
 						self.frontier_set.add((pos,e2_i))
-
-
-			#Side 0-3, starting from top, CW.
-			for s in range(4):
-				#edge index for each side, 0-2, counting CW.
-
-				n_coord = self.getNeighborPos(pos,s)
-
-				for e in range(3):
-
-					#This is the edge index of the current tick we're looking at.
-					edge_index = 3*s + e
-					#This is the corresponding one for the neighbor.
-					n_edge_index = self.edge_match[edge_index]
-
-					if (n_coord,n_edge_index) in self.frontier_set:
-
-						for i,p in enumerate(self.paths_list):
-
-							if (n_coord,n_edge_index) in p:
-
-								e_pair_index = tile.pair_match[edge_index]
-								(e_pair_s,e_pair_ei) = self.edgeIndexToSideAndTick(e_pair_index)
-
-								#Here we're gonna get the other side of the pair for this
-								#tile, and check if it too connects to some path. If it does,
-								#we'll check if it's the same path (i.e., a loop), and handle it from
-								#there.
-								n2_coord = self.getNeighborPos(pos,e_pair_s)
-
-
-								n2_coord = (pos[0]+n_coord_add[s][0],pos[1]+n_coord_add[s][1])
-								if
-
-
-
 
 
 		#...let's handle this later.
@@ -198,9 +172,7 @@ class Board:
 
 
 
-		pass
-
-	def getNeighborPos(self,pos,side):
+	def getNeighborPos(self,pos,s):
 		#pos is the x,y coord, side is 0-3, starting top, clockwise.
 		#So annoyingly, the origin is the upper left, so we count to the right
 		#and down.
@@ -239,6 +211,7 @@ class Board:
 		for tile in self.disp_tile_list:
 			self.plotType1(tile)
 
+		self.bg.save('saved_imgs/stamp1.png')
 		self.bg.show()
 
 		return(0)
@@ -252,11 +225,11 @@ class Board:
 
 
 
-	def uniformPopulate(self):
+	def uniformPopulate(self,rot=0):
 
 		for i in range(self.N_board):
 			for j in range(self.N_board):
-				self.insertTile((i,j),type=1,rot=0)
+				self.insertTile((i,j),type=1,rot=rot)
 
 	def randomRotPopulate(self):
 
@@ -283,10 +256,37 @@ class Board:
 		for i in range(self.N_board):
 			for j in range(self.N_board):
 				self.insertTile((i,j),type=1,rot=(i+j)%mod)
-				#self.insertTile((i,j),type=1,rot=floor(sqrt((i**2+j**2)))%mod)
+
+	def radialPopulate(self,mod=2):
+
+		for i in range(self.N_board):
+			for j in range(self.N_board):
+				self.insertTile((i,j),type=1,rot=floor(sqrt((i**2+j**2)))%mod)
+
+
+	def multPopulate(self,mod=2):
+
+		for i in range(self.N_board):
+			for j in range(self.N_board):
+				self.insertTile((i,j),type=1,rot=i*j)
 
 
 
+	def pythagTiling(self,big_sq_size=2):
+
+		for x in range(-int(self.N_board/2),self.N_board):
+			for y in range(-1,self.N_board):
+
+				i = big_sq_size*x + y
+				j = big_sq_size*y - x
+
+				#The big square
+				for a in range(big_sq_size):
+					for b in range(big_sq_size):
+						self.insertTile((i+a,j+b),type=1,rot=0)
+
+				#the smaller square
+				self.insertTile((i-1,j),type=1,rot=2)
 
 
 
