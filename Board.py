@@ -14,7 +14,7 @@ class Board:
 
 	def __init__(self,board_size=10):
 
-		self.board_size_px = 1000
+		self.board_size_px = 700
 		self.N_board = board_size
 
 		self.tile_size = int(self.board_size_px/self.N_board)
@@ -43,7 +43,7 @@ class Board:
 		self.tile_list = []
 		self.tile_pos_set = set([])
 		self.disp_tile_list = []
-
+		self.label = ''
 		self.N_closed_paths = 0
 
 
@@ -211,7 +211,8 @@ class Board:
 		for tile in self.disp_tile_list:
 			self.plotType1(tile)
 
-		self.bg.save('saved_imgs/stamp1.png')
+		fname = self.label + '_size' + str(self.N_board) + '.png'
+		self.bg.save('saved_imgs/' + fname)
 		self.bg.show()
 
 		return(0)
@@ -226,54 +227,73 @@ class Board:
 
 
 	def uniformPopulate(self,rot=0):
-
+		self.label = 'uniform_rot'+str(rot)
 		for i in range(self.N_board):
 			for j in range(self.N_board):
 				self.insertTile((i,j),type=1,rot=rot)
 
 	def randomRotPopulate(self):
-
+		self.label = 'randomrot'
 		for i in range(self.N_board):
 			for j in range(self.N_board):
 				self.insertTile((i,j),type=1,rot=randint(0,3))
 
 	def hStripesPopulate(self,mod=2):
-
+		self.label = 'hstripes_mod'+str(mod)
 		for i in range(self.N_board):
 			for j in range(self.N_board):
 				self.insertTile((i,j),type=1,rot=j%mod)
 
 
 	def vStripesPopulate(self,mod=2):
-
+		self.label = 'vstripes_mod'+str(mod)
 		for i in range(self.N_board):
 			for j in range(self.N_board):
 				self.insertTile((i,j),type=1,rot=i%mod)
 
 
 	def bothStripesPopulate(self,mod=2):
-
+		self.label = 'bothstripes_mod'+str(mod)
 		for i in range(self.N_board):
 			for j in range(self.N_board):
 				self.insertTile((i,j),type=1,rot=(i+j)%mod)
 
-	def radialPopulate(self,mod=2):
-
+	def radialPopulate(self,mod=4):
+		self.label = 'radial_mod'+str(mod)
 		for i in range(self.N_board):
 			for j in range(self.N_board):
-				self.insertTile((i,j),type=1,rot=floor(sqrt((i**2+j**2)))%mod)
+				self.insertTile((i,j),type=1,rot=floor(sqrt(((i-self.N_board/2)**2+(j-self.N_board/2)**2)))%mod)
 
 
-	def multPopulate(self,mod=2):
-
+	def multPopulate(self,mod=4):
+		self.label = 'mult_mod'+str(mod)
 		for i in range(self.N_board):
 			for j in range(self.N_board):
-				self.insertTile((i,j),type=1,rot=i*j)
+				self.insertTile((i,j),type=1,rot=(i*j)%mod)
+
+
+	def totalAddPopulate(self,mult=1):
+		self.label = 'total_add_mult' + str(mult)
+		for i in range(self.N_board):
+			for j in range(self.N_board):
+				self.insertTile((i,j),type=1,rot=i*j + i*mult)
+
+	def fibonacciPopulate(self):
+		self.label = 'fibonacci'
+		fib_seq = [1,1]
+
+		for i in range(self.N_board*(self.N_board+1)):
+			fib_seq.append(fib_seq[-1] + fib_seq[-2])
+		fib_seq = np.array(fib_seq)%4
+		#print(fib_seq)
+		for i in range(self.N_board):
+			for j in range(self.N_board):
+				self.insertTile((i,j),type=1,rot=fib_seq[i*j + i])
 
 
 
-	def pythagTiling(self,big_sq_size=2):
-
+	def pythagTiling(self,big_sq_size=2,bigrot=0,smallrot=2):
+		self.label = 'pythag_bigsq{}_bigrot{}_smallrot{}'.format(big_sq_size,bigrot,smallrot)
 		for x in range(-int(self.N_board/2),self.N_board):
 			for y in range(-1,self.N_board):
 
@@ -283,10 +303,10 @@ class Board:
 				#The big square
 				for a in range(big_sq_size):
 					for b in range(big_sq_size):
-						self.insertTile((i+a,j+b),type=1,rot=0)
+						self.insertTile((i+a,j+b),type=1,rot=bigrot)
 
 				#the smaller square
-				self.insertTile((i-1,j),type=1,rot=2)
+				self.insertTile((i-1,j),type=1,rot=smallrot)
 
 
 
